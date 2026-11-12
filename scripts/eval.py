@@ -96,6 +96,16 @@ def latency_table() -> list[tuple[str, int, float, float]]:
                 *_stats(measure(lambda i: c.get(f"/notes/{10_000 + i}", headers=h), 200)),
             )
         )
+
+        # Timing side-channel: does a wrong password take as long as an unknown email?
+        def bad_password(i):
+            c.post("/auth/login", data={"username": "u0@ex.com", "password": "wrong-password-x"})
+
+        def unknown_email(i):
+            c.post("/auth/login", data={"username": f"ghost{i}@ex.com", "password": "wrong-password-x"})
+
+        rows.append(("POST /auth/login (wrong password)", 20, *_stats(measure(bad_password, 20))))
+        rows.append(("POST /auth/login (unknown email)", 20, *_stats(measure(unknown_email, 20))))
     app.dependency_overrides.clear()
     return rows
 

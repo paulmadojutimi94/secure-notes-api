@@ -18,7 +18,10 @@ jobs:
           cache: pip
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
-      - run: pytest -q
+      - name: Tests (a skipped test fails the build; see POSTMORTEM.md)
+        run: |
+          pytest -q -rs | tee pytest.log
+          if grep -q "skipped" pytest.log; then echo "::error::Tests were skipped"; exit 1; fi
       - name: Eval report (hard numbers)
         if: matrix.python-version == '3.12'
         run: python scripts/eval.py | tee -a "$GITHUB_STEP_SUMMARY"
